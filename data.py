@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -12,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
+
 
 import re, string, traceback, itertools
 
@@ -30,7 +33,6 @@ FILMARKIVET_BASE = "http://www.filmarkivet.se/sv/"
 MOVIES_PER_PAGE = 20
 
 
-
 def make_category_url(url):
 	try:
 		spos = url.find('filter')
@@ -42,40 +44,58 @@ def make_category_url(url):
 	return '/categories'
 
 
-def parse_categories():
-	url = FILMARKIVET_BASE + "Sok/?quicksearch=sorted"
-	html = requests.get(url).text
-	html = parseDOM(html, 'div', {'class':'result-body'})
-	html = parseDOM(html, 'div', {'class':'unit size1of5 filter-col'})
-	html = parseDOM(html, 'ul')
-	html = parseDOM(html, 'li')
+SUB_CATEGORIES = {'categories':0, 'years':1, 'provinces':2, 'cities':3}
 
-	titles = parseDOM(html, 'a')
-	titles = map(html_decode, titles)
-	urls = parseDOM(html, 'a', ret='href')
-	urls = [make_category_url(u) for u in urls]
-	return zip(titles, urls, itertools.repeat(''), itertools.repeat(''))
 
-  
+def parse_categories(subcat):
+	if subcat not in SUB_CATEGORIES.keys():
+		return None
+
+	try:
+		url = FILMARKIVET_BASE + "Sok/?quicksearch=sorted"
+		html = requests.get(url).text
+		html = parseDOM(html, 'div', {'class':'result-body'})
+		html = parseDOM(html, 'div', {'class':'unit size1of5 filter-col'})
+
+		# Parse results to a list where each element is the sub category (catories, years, provinces, cities).
+		categories = parseDOM(html, 'ul')
+		category = categories[SUB_CATEGORIES[subcat]]
+		elements = parseDOM(category, 'li')
+		elements = elements[1:]		# Drop first element that contains the category title
+
+		titles = parseDOM(elements, 'a')
+		titles = map(html_decode, titles)
+		urls = parseDOM(elements, 'a', ret='href')
+		urls = [make_category_url(u) for u in urls]
+
+		result = zip(titles, urls, itertools.repeat(''), itertools.repeat(''))
+
+		return result
+	except:
+		return None
+
+
 def parse_category(arg, page=1):
-	url = FILMARKIVET_BASE + 'Sok/?quicksearch=sorted&%s&page=%d' % (arg, page)
-	html = requests.get(url).text
+	try:
+		url = FILMARKIVET_BASE + 'Sok/?quicksearch=sorted&%s&page=%d' % (arg, page)
+		html = requests.get(url).text
 
-	hits = parseHits(html)
-	films = parseFilms(html)
+		hits = parseHits(html)
+		films = parseFilms(html)
 
-	next_url = None
-	if page * MOVIES_PER_PAGE < hits:
-		next_url = '/category/%s/%d' % (arg, page+1)
+		next_url = None
+		if page * MOVIES_PER_PAGE < hits:
+			next_url = '/category/%s/%d' % (arg, page+1)
 
-	return films, next_url
+		return films, next_url
+	except:
+		return None, None
 
 
 def make_theme_url(url):
 	try:
 		pos = url.find('themeid=')
 		if pos != -1:
-			print '/theme/%s' % (url[pos+8:])
 			return '/theme/%s' % (url[pos+8:])
 	except:
 		return '/themes'
@@ -83,73 +103,87 @@ def make_theme_url(url):
 
 
 def parse_themes():
-	url = FILMARKIVET_BASE
-	html = requests.get(url).text
-	html = parseDOM(html, 'ul', {'class':'themes'})
-	html = parseDOM(html, 'li')
+	try:
+		url = FILMARKIVET_BASE
+		html = requests.get(url).text
+		html = parseDOM(html, 'ul', {'class':'themes'})
+		html = parseDOM(html, 'li')
 
-	titles = parseDOM(html, 'a')
-	titles = map(html_decode, titles)
-	urls = parseDOM(html, 'a', ret='href')
-	urls = [make_theme_url(u) for u in urls]
-	return zip(titles, urls, itertools.repeat(''), itertools.repeat(''))
+		titles = parseDOM(html, 'a')
+		titles = map(html_decode, titles)
+		urls = parseDOM(html, 'a', ret='href')
+		urls = [make_theme_url(u) for u in urls]
+		return zip(titles, urls, itertools.repeat(''), itertools.repeat(''))
+	except:
+		return None
 
   
 def parse_theme(theme_id, page=1):
-	url = FILMARKIVET_BASE + 'Sok/?themeid=%s&page=%d' % (theme_id, page)
-	print url
-	html = requests.get(url).text
+	try:
+		url = FILMARKIVET_BASE + 'Sok/?themeid=%s&page=%d' % (theme_id, page)
+		html = requests.get(url).text
 
-	hits = parseHits(html)
-	films = parseFilms(html)
+		hits = parseHits(html)
+		films = parseFilms(html)
 
-	next_url = None
-	if page * MOVIES_PER_PAGE < hits:
-		next_url = '/theme/%s/%d' % (theme_id, page+1)
+		next_url = None
+		if page * MOVIES_PER_PAGE < hits:
+			next_url = '/theme/%s/%d' % (theme_id, page+1)
 
-	return films, next_url
+		return films, next_url
+	except:
+		return None, None
 
 
 def parse_popular(page=1):
-	url = FILMARKIVET_BASE + 'Sok/?quicksearch=popular&page=%d' % page
-	html = requests.get(url).text
+	try:
+		url = FILMARKIVET_BASE + 'Sok/?quicksearch=popular&page=%d' % page
+		html = requests.get(url).text
 
-	hits = parseHits(html)
-	films = parseFilms(html)
+		hits = parseHits(html)
+		films = parseFilms(html)
 
-	next_url = None
-	if page * MOVIES_PER_PAGE < hits:
-		next_url = '/popular/%d' % (page+1)
+		next_url = None
+		if page * MOVIES_PER_PAGE < hits:
+			next_url = '/popular/%d' % (page+1)
 
-	return films, next_url
+		return films, next_url
+	except:
+		return None, None
 
 
 def parse_recent(page=1):
-	url = FILMARKIVET_BASE + 'Sok/?quicksearch=latest&page=%d' % page
-	html = requests.get(url).text
+	try:
+		url = FILMARKIVET_BASE + 'Sok/?quicksearch=latest&page=%d' % page
+		html = requests.get(url).text
 
-	hits = parseHits(html)
-	films = parseFilms(html)
+		hits = parseHits(html)
+		films = parseFilms(html)
 
-	next_url = None
-	if page * MOVIES_PER_PAGE < hits:
-		next_url = '/recent/%d' % (page+1)
+		next_url = None
+		if page * MOVIES_PER_PAGE < hits:
+			next_url = '/recent/%d' % (page+1)
 
-	return films, next_url
+		return films, next_url
+	except:
+		return None, None
 
  
 def parse_search(search_string, page=1):
-	url = FILMARKIVET_BASE + 'Sok/?q=%s&page=%d' % (search_string, page)
-	html = requests.get(url).text
+	try:
+		url = FILMARKIVET_BASE + 'Sok/?q=%s&page=%d' % (search_string, page)
+		html = requests.get(url).text
 
-	hits = parseHits(html)
-	films = parseFilms(html)
+		hits = parseHits(html)
+		films = parseFilms(html)
 
-	next_url = None
-	if page * MOVIES_PER_PAGE < hits:
-		next_url = '/search/%s/%d' % (search_string, page+1)
+		next_url = None
+		if page * MOVIES_PER_PAGE < hits:
+			next_url = '/search/%s/%d' % (search_string, page+1)
 
-	return films, next_url
+		return films, next_url
+	except:
+		return None, None
 
 
 def parseHits(html):
@@ -193,7 +227,7 @@ def parseFilms(html):
 	else:
 		a = iter(titles)
 		b = iter(descs)
-		titles = [i+'  (' + j + ')' for i, j in itertools.izip(a, b)]
+		titles = [i + '  (' + j + ')' for i, j in itertools.izip(a, b)]
  
 	urls = parseDOM(html, 'a', ret='href')
 	urls = [make_film_url(u) for u in urls]
