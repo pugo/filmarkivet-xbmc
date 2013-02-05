@@ -49,6 +49,8 @@ def make_category_url(url):
 SUB_CATEGORIES = {'categories':0, 'years':1, 'provinces':2, 'cities':3}
 
 
+# Retrieve all categories from web page. Then filter results to requested subcategory.
+# Return a list of category URL:s, from calling make_category_url() above.
 def parse_categories(subcat):
 	if subcat not in SUB_CATEGORIES.keys():
 		return None
@@ -77,6 +79,8 @@ def parse_categories(subcat):
 		return None
 
 
+# Get list of movies inside a category. Requests web page for category and page and returns a list of movie links-
+# The "arg" argument comes from the previous parsing of the category in parse_categories.
 def parse_category(arg, page=1):
 	try:
 		url = FILMARKIVET_BASE + 'Sok/?quicksearch=sorted&%s&page=%d' % (arg, page)

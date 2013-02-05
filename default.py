@@ -118,9 +118,10 @@ def view(elements, next_url=None):
 	if not elements:
 		error_title = __translation(30002)
 		error_message1 = __translation(30003)
-		error_message2 = __translation(30004)
+		error_message2 = __translation(30005)
+		error_message3 = __translation(30004)
 		dialog = xbmcgui.Dialog()
-		dialog.ok(error_title, error_message1, error_message2)
+		dialog.ok(error_title, error_message1, error_message2, error_message3)
 		return
 
 	total = len(elements)
