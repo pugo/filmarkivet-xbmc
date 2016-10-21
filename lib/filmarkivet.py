@@ -18,10 +18,10 @@
 from bs4 import BeautifulSoup
 import lib.webget
 import urllib
-
+import re
 
 class Filmarkivet(object):
-	MOVIES_PER_PAGE = 20
+	MOVIES_PER_PAGE = 50
 
 	MAIN_MENU = [{'mode': 'categories', 'title': 30010},
 				 {'mode': 'letters', 'title': 30011},
@@ -36,9 +36,11 @@ class Filmarkivet(object):
 			self.icon = icon
 			self.playable = False
 
+
 	def __init__(self, info):
 		self.info = info
 		self.webget = lib.webget.WebGet(info['cache'])
+		self.movies_regex = re.compile('.*Visar.*av (.*) filmer')
 
 	def __url_for(self, url):
 		return 'plugin://{}{}'.format(self.info['id'], url)
@@ -50,8 +52,8 @@ class Filmarkivet(object):
 										self.__url_for('?mode={}'.format(item['mode'])), '', ''))
 		return result
 
-	def __mode_url(self, mode):
-	    return 'plugin://{}?mode={}'.format(self.info['id'], mode)
+	def mode_url(self, mode):
+		return 'plugin://{}?mode={}'.format(self.info['id'], mode)
 
 	def get_categories(self):
 		html = self.webget.getURL('/')
@@ -63,34 +65,50 @@ class Filmarkivet(object):
 			return []
 		items = lists[0].find_all('li')
 		result = []
-		mode_url = self.__mode_url('category')
+		mode_url = self.mode_url('category')
 		for item in items[1:]:
 			url = '{}&url={}'.format(mode_url, item.a['href'])
 			result.append(self.ListItem(item.a.string, url, '', ''))
 		return result
 
-	def get_url_movies(self, url, unlimit=False):
-		if unlimit:
-			url = url + '&limit=1000'
-		html = self.webget.getURL(url)
+	def __get_range(self, soup):
+		try:
+			soup = soup.find('span', {'id': 'pageSpan'})
+			m_range = soup.string.split('-')
+			t = soup.parent.get_text().strip()
+			match = self.movies_regex.match(t)
+			return [int(m_range[0]), int(m_range[1])], int(match.group(1))
+		except:
+			return None, None
+
+	def get_url_movies(self, url, mode, page=1, limit=False):
+		get_url = url
+		if limit:
+			get_url += '{}limit={}&pg={}'.format('?' if url.rfind('?') < 0 else '&', self.MOVIES_PER_PAGE, page)
+		html = self.webget.getURL(get_url)
 		soup = BeautifulSoup(html, 'html.parser')
+		range, range_max = self.__get_range(soup)
 		soup = soup.find('div', {'id': 'list'})
 		movies = soup.find_all('a', {'class': 'item'})
 		result = []
-		mode_url = self.__mode_url('watch')
+		mode_url = self.mode_url('watch')
 		for movie in movies:
 			title = movie.h3.contents[0].strip()
-			url = '{}&url={}'.format(mode_url, urllib.quote(movie['href'].replace('#038;', '')))
+			movie_url = '{}&url={}'.format(mode_url, urllib.quote(movie['href'].replace('#038;', '')))
 			desc = u'{} ({})'.format(movie.p.string.strip(), movie.h3.span.string.strip())
 			img = movie.figure.img['src']
-			li = self.ListItem(title, url, desc, img)
+			li = self.ListItem(title, movie_url, desc, img)
 			li.playable = True
 			result.append(li)
+		if range[1] < range_max:
+			next_url = '{}&url={}&page={}'.format(self.mode_url(mode), urllib.quote(url), page + 1)
+			print 'Next url:', next_url
+			result.append(self.ListItem(self.info['translation'](30001), next_url, None, None))
 		return result
 
 	def get_letters(self):
 		result = []
-		mode_url = self.__mode_url('letter')
+		mode_url = self.mode_url('letter')
 		for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ":
 			url = '{}&l={}'.format(mode_url, l.lower())
 			result.append(self.ListItem(l, url, '', ''))
@@ -103,13 +121,10 @@ class Filmarkivet(object):
 		soup = soup.find('section', {'class': 'block', 'id': letter})
 		soup = soup.find('ul', {'class': 'alphabetical'})
 		movies = soup.find_all('a')
-		print soup
-		mode_url = self.__mode_url('watch')
+		mode_url = self.mode_url('watch')
 		for movie in movies:
 			title = movie.contents[0].strip()
 			url = '{}&url={}'.format(mode_url, urllib.quote(movie['href']))
-			# desc = u'{} ({})'.format(movie.p.string.strip(), movie.h3.span.string.strip())
-			# img = movie.figure.img['src']
 			li = self.ListItem(title, url, None, None)
 			li.playable = True
 			result.append(li)
@@ -125,7 +140,7 @@ class Filmarkivet(object):
 			return []
 		items = lists[1].find_all('li')
 		result = []
-		mode_url = self.__mode_url('theme')
+		mode_url = self.mode_url('theme')
 		for item in items[1:]:
 			url = '{}&url={}'.format(mode_url, item.a['href'])
 			result.append(self.ListItem(item.a.string, url, '', ''))
@@ -145,31 +160,3 @@ class Filmarkivet(object):
 					if l[1].startswith('https:'):
 						return l[1]
 		return None
-
-
-# def parse_search(search_string, page=1):
-# 	try:
-# 		url = FILMARKIVET_BASE + 'Sok/?q=%s&page=%d' % (search_string, page)
-# 		html = session.get(url).text
-#
-# 		hits = parseHits(html)
-# 		films = parseFilms(html)
-#
-# 		next_url = None
-# 		if page * MOVIES_PER_PAGE < hits:
-# 			next_url = '/search/%s/%d' % (search_string, page+1)
-#
-# 		return films, next_url
-# 	except:
-# 		return None, None
-#
-
-# def parseHits(html):
-# 	try:
-# 		h = parseDOM(html, 'div', {'class':'number-of-hits'})
-# 		return int(h[0].split('</span>')[1])
-# 	except:
-# 		print 'failed to get hits.'
-# 	return 0
-
-

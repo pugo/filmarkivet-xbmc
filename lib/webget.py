@@ -1,10 +1,25 @@
+# -*- coding: utf-8 -*-
+
+'''
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
 
 import os
 import urllib
 import hashlib
 import datetime
 import urllib2
-
 
 
 class GetException(Exception):
@@ -15,7 +30,6 @@ class WebGet(object):
 
 	def __init__(self, cachePath):
 		self.cachePath = cachePath
-		print('cache:', self.cachePath)
 
 	def getURL(self, url='/'):
 		print 'getURL:', url
@@ -25,7 +39,6 @@ class WebGet(object):
 		try:
 			if not url.startswith('http://'):
 				url = self.API_URL + url
-				print 'xxxx:', url
 			if params:
 				url = url + '?' + urllib.urlencode(params, doseq=True)
 			cache_path = os.path.join(self.cachePath, hashlib.md5(url).hexdigest() + '.cache')
@@ -40,7 +53,6 @@ class WebGet(object):
 			raise GetException(ex)
 
 	def __download_url(self, url, destination):
-		data = ''
 		u = urllib2.urlopen(url, timeout=30)
 		data = u.read()
 		u.close()
@@ -49,6 +61,6 @@ class WebGet(object):
 			with open(destination, 'w') as dest:
 				dest.write(data)
 		except:
-			pass  # ignore, cache has no effect
+			pass
 
 		return data
