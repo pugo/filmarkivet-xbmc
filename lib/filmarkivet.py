@@ -107,12 +107,12 @@ class Filmarkivet(object):
 
 	def get_letters(self):
 		mode_url = self.mode_url('letter')
-		return [self.ListItem(l, '{}&l={}'.format(mode_url, l.lower()), '', '') for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ"]
+		return [self.ListItem(l, u'{}&l={}'.format(mode_url, l), '', '') for l in u'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ']
 
 	def get_letter_movies(self, letter):
 		html = self.webget.getURL('/filmer-a-o/')
 		soup = BeautifulSoup(html, 'html.parser')
-		soup = soup.find('section', {'class': 'block', 'id': letter})
+		soup = soup.find('section', {'class': 'block', 'id': letter.lower()})
 		soup = soup.find('ul', {'class': 'alphabetical'})
 		movies = soup.find_all('a')
 		mode_url = self.mode_url('watch')
