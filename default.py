@@ -29,12 +29,12 @@ def view_menu(menu):
 	for item in menu:
 		title = u'{} | {}'.format(item.title, item.description) if item.description else item.title
 		li = xbmcgui.ListItem(title, iconImage=item.icon)
+		li.setInfo('video', {'title': item.title, 'year': item.year, 'duration': item.duration})
 		if item.playable:
 			li.setProperty('isplayable', 'true')
 			li.setInfo('video', {'plot': item.description})
-		xbmcplugin.addDirectoryItem(info['handle'], item.url, li, not item.playable)
-	xbmcplugin.endOfDirectory(info['handle'])
-
+		xbmcplugin.addDirectoryItem(info.handle, item.url, li, not item.playable)
+	xbmcplugin.endOfDirectory(info.handle)
 
 def keyboard_get_string(default, message):
 	keyboard = xbmc.Keyboard(default, message)
@@ -44,21 +44,34 @@ def keyboard_get_string(default, message):
 	else:
 		return None
 
+def show_error():
+	error_title = __translation(30002)
+	error_message1 = __translation(30003)
+	error_message2 = __translation(30004)
+	xbmcgui.Dialog().ok(error_title, error_message1, error_message2)
+
+
+class AddonInfo(object):
+	def __init__(self):
+		self.name = addon.getAddonInfo('name')
+		self.id = addon.getAddonInfo('id')
+		self.handle = int(sys.argv[1])
+		self.path = sys.argv[0]
+		self.icon = os.path.join(addon.getAddonInfo('path'), 'icon.png')
+		self.fanart = os.path.join(addon.getAddonInfo('path'), 'fanart.jpg')
+		self.cache = xbmc.translatePath(addon.getAddonInfo("Profile"))
+		self.trans = addon.getLocalizedString
+		self.do_cache = True
+
+		if not os.path.exists(self.cache):
+			try:
+				os.makedirs(self.cache)
+			except:
+				self.do_cache = False
+
 
 if ( __name__ == "__main__" ):
-	info = {'name': addon.getAddonInfo('name'),
-			'id': addon.getAddonInfo('id'),
-			'handle': int(sys.argv[1]),
-			'path': sys.argv[0],
-			'icon': os.path.join(addon.getAddonInfo('path'), 'icon.png'),
-			'fanart': os.path.join(addon.getAddonInfo('path'), 'fanart.jpg'),
-			'cache': xbmc.translatePath(addon.getAddonInfo("Profile")),
-			'translation': addon.getLocalizedString
-			}
-
-	if not os.path.exists(info['cache']):
-		os.makedirs(info['cache'])
-
+	info = AddonInfo()
 	params = urlparse.parse_qs(sys.argv[2][1:])
 	print ('PARAMS:', params)
 	print ('ARGV:', sys.argv)
@@ -66,41 +79,42 @@ if ( __name__ == "__main__" ):
 	if 'content_type' in params:
 		content_type = params['content_type'][0]
 
+
 	fa = Filmarkivet(info)
 	if 'mode' in params:
-		page = int(params['page'][0]) if 'page' in params else 1
+		try:
+			mode = params['mode'][0]
+			page = int(params['page'][0]) if 'page' in params else 1
+			url = params['url'][0] if 'url' in params else None
 
-		if params['mode'][0] == 'categories':
-			view_menu(fa.get_categories())
-		if params['mode'][0] == 'category':
-			if 'url' in params:
-				movies = fa.get_url_movies(params['url'][0], mode='category', page=page, limit=True)
+			if mode == 'categories':
+				view_menu(fa.get_categories())
+			if mode == 'category' and url:
+				movies = fa.get_url_movies(url, mode='category', page=page, limit=True)
 				view_menu(movies)
 
-		if params['mode'][0] == 'letters':
-			view_menu(fa.get_letters())
-		if params['mode'][0] == 'letter':
-			if 'l' in params:
-				view_menu(fa.get_letter_movies(params['l'][0]))
+			if mode == 'letters':
+				view_menu(fa.get_letters())
+			if mode == 'letter':
+				if 'l' in params:
+					view_menu(fa.get_letter_movies(params['l'][0]))
 
-		if params['mode'][0] == 'themes':
-			view_menu(fa.get_themes())
-		if params['mode'][0] == 'theme':
-			if 'url' in params:
-				movies = fa.get_url_movies(params['url'][0], mode='theme', page=page, limit=True)
+			if mode == 'themes':
+				view_menu(fa.get_themes())
+			if mode == 'theme' and url:
+				movies = fa.get_url_movies(url, mode='theme', page=page, limit=True)
 				view_menu(movies)
 
-		if params['mode'][0] == 'watch':
-			url = urllib.unquote(params['url'][0])
-			media_url = fa.get_media_url(url)
-			li = xbmcgui.ListItem(path=media_url)
-			xbmcplugin.setResolvedUrl(info['handle'], True, li)
+			if mode == 'watch':
+				media_url = fa.get_media_url(urllib.unquote(url))
+				xbmcplugin.setResolvedUrl(info.handle, True, xbmcgui.ListItem(path=media_url))
 
-		if params['mode'][0] == 'search':
-			key = params['key'][0] if 'key' in params else keyboard_get_string('', info['translation'](30023))
-			movies = fa.get_url_movies('/sokresultat/?q={}'.format(key), mode='search&key={}'.format(key), page=page, limit=True)
-			view_menu(movies)
-
+			if mode == 'search':
+				key = params['key'][0] if 'key' in params else keyboard_get_string('', info.trans(30023))
+				movies = fa.get_url_movies('/sokresultat/?q={}'.format(key), mode='search&key={}'.format(key), page=page, limit=True)
+				view_menu(movies)
+		except:
+			show_error()
 	else:
 		view_menu(fa.get_mainmenu())
 

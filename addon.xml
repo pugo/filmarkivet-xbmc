@@ -4,19 +4,23 @@
        version="3.0.0"
        provider-name="Anders Piniesjö (pugo@pugo.org)">
   <requires>
-   <import addon="xbmc.python" version="2.14.0"/>
-   <import addon="script.module.beautifulsoup4" version="4.3.2"/>
+    <import addon="xbmc.python" version="2.14.0"/>
+    <import addon="script.module.beautifulsoup4" version="4.3.2"/>
   </requires>
   <extension point="xbmc.python.pluginsource" library="default.py">
     <provides>video</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
     <platform>all</platform>
-    <language>se</language>
+    <language>sv en de</language>
+    <email>pugo@pugo.org</email>
+    <license>GNU General Public License, v3</license>
+    <source>https://github.com/search?q=filmarkivet</source>
     <summary lang="en">Watch movies from the Swedish Film Institute film archive</summary>
-    <summary lang="se">Se filmer från Svenska Filminstitutets Filmarkivet</summary>
+    <summary lang="sv">Se filmer från Svenska Filminstitutets Filmarkivet</summary>
+    <summary lang="de">Filme von dem Filmarchiv des schwedisches Filminstituts</summary>
     <description lang="en">Filmarkivet is an archive of historical Swedish films, provided by the Swedish Film Institute.</description>
-    <description lang="se">Filmarkivet är ett arkiv med historiska svenska filmer, publicerade av Svenska Filminstitutet.</description>
+    <description lang="sv">Filmarkivet är ett arkiv med historiska svenska filmer, publicerade av Svenska Filminstitutet.</description>
     <description lang="de">Filmarkivet ist ein Archiv von historischen schwedischen Filmen, veröffentlicht bei Svenska Filminstitutet.</description>
   </extension>
 </addon>

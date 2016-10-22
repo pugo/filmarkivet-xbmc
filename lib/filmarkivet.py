@@ -35,41 +35,33 @@ class Filmarkivet(object):
 			self.description = description
 			self.icon = icon
 			self.playable = False
+			self.year = None
+			self.duration = None
 
 
 	def __init__(self, info):
 		self.info = info
-		self.webget = lib.webget.WebGet(info['cache'])
+		self.webget = lib.webget.WebGet(info.cache if info.do_cache else None)
 		self.movies_regex = re.compile('.*Visar.*av (.*) filmer')
+		self.meta_regex = re.compile('(\d+) / (\d+) min')
 
 	def __url_for(self, url):
-		return 'plugin://{}{}'.format(self.info['id'], url)
+		return 'plugin://{}{}'.format(self.info.id, url)
 
 	def get_mainmenu(self):
-		result = []
-		for item in self.MAIN_MENU:
-			result.append(self.ListItem(self.info['translation'](item['title']),
-										self.__url_for('?mode={}'.format(item['mode'])), '', ''))
-		return result
+		return [self.ListItem(self.info.trans(item['title']), self.__url_for('?mode={}'.format(item['mode'])), '', '') for item in self.MAIN_MENU]
 
 	def mode_url(self, mode):
-		return 'plugin://{}?mode={}'.format(self.info['id'], mode)
+		return 'plugin://{}?mode={}'.format(self.info.id, mode)
 
 	def get_categories(self):
 		html = self.webget.getURL('/')
 		soup = BeautifulSoup(html, 'html.parser')
 		soup = soup.find('ul', {'class': 'site-nav-menu'})
 		lists = soup.find_all('ul')
-		if not len(lists):
-			print('Error!')
-			return []
 		items = lists[0].find_all('li')
-		result = []
 		mode_url = self.mode_url('category')
-		for item in items[1:]:
-			url = '{}&url={}'.format(mode_url, item.a['href'])
-			result.append(self.ListItem(item.a.string, url, '', ''))
-		return result
+		return [self.ListItem(item.a.string, '{}&url={}'.format(mode_url, item.a['href']), '', '') for item in items[1:]]
 
 	def __get_range(self, soup):
 		try:
@@ -95,33 +87,36 @@ class Filmarkivet(object):
 		for movie in movies:
 			title = movie.h3.contents[0].strip()
 			movie_url = '{}&url={}'.format(mode_url, urllib.quote(movie['href'].replace('#038;', '')))
-			desc = u'{} ({})'.format(movie.p.string.strip(), movie.h3.span.string.strip())
+			meta = movie.h3.span.string.strip()
+			desc = u'{} ({})'.format(movie.p.string.strip(), meta)
 			img = movie.figure.img['src']
 			li = self.ListItem(title, movie_url, desc, img)
 			li.playable = True
+			try:
+				match = self.meta_regex.match(meta)
+				if match:
+					li.year = int(match.group(1)),
+					li.duration = int(match.group(2)) * 60
+			except:
+				pass
 			result.append(li)
 		if range[1] < range_max:
 			next_url = '{}&url={}&page={}'.format(self.mode_url(mode), urllib.quote(url), page + 1)
-			print 'Next url:', next_url
-			result.append(self.ListItem(self.info['translation'](30001), next_url, None, None))
+			result.append(self.ListItem(self.info.trans(30001), next_url, None, None))
 		return result
 
 	def get_letters(self):
-		result = []
 		mode_url = self.mode_url('letter')
-		for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ":
-			url = '{}&l={}'.format(mode_url, l.lower())
-			result.append(self.ListItem(l, url, '', ''))
-		return result
+		return [self.ListItem(l, '{}&l={}'.format(mode_url, l.lower()), '', '') for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ"]
 
 	def get_letter_movies(self, letter):
 		html = self.webget.getURL('/filmer-a-o/')
 		soup = BeautifulSoup(html, 'html.parser')
-		result = []
 		soup = soup.find('section', {'class': 'block', 'id': letter})
 		soup = soup.find('ul', {'class': 'alphabetical'})
 		movies = soup.find_all('a')
 		mode_url = self.mode_url('watch')
+		result = []
 		for movie in movies:
 			title = movie.contents[0].strip()
 			url = '{}&url={}'.format(mode_url, urllib.quote(movie['href']))
@@ -135,16 +130,9 @@ class Filmarkivet(object):
 		soup = BeautifulSoup(html, 'html.parser')
 		soup = soup.find('ul', {'class': 'site-nav-menu'})
 		lists = soup.find_all('ul')
-		if len(lists) < 2:
-			print('Error!')
-			return []
 		items = lists[1].find_all('li')
-		result = []
 		mode_url = self.mode_url('theme')
-		for item in items[1:]:
-			url = '{}&url={}'.format(mode_url, item.a['href'])
-			result.append(self.ListItem(item.a.string, url, '', ''))
-		return result
+		return [self.ListItem(item.a.string, '{}&url={}'.format(mode_url, urllib.quote(item.a['href'])), '', '') for item in items[1:]]
 
 	def get_media_url(self, url):
 		html = self.webget.getURL(url)
