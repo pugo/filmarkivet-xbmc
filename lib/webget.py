@@ -32,12 +32,11 @@ class WebGet(object):
 		self.cache_path = cache_path
 
 	def getURL(self, url='/'):
-		print 'getURL:', url
 		return self.__http_request(url)
 
 	def __http_request(self, url, params=None, cache_minutes = 120):
 		try:
-			if not url.startswith('http://'):
+			if not (url.startswith('http://') or url.startswith('https://')):
 				url = self.API_URL + url
 			if params:
 				url += '?' + urllib.urlencode(params, doseq=True)

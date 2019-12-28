@@ -73,12 +73,11 @@ class AddonInfo(object):
 if ( __name__ == "__main__" ):
 	info = AddonInfo()
 	params = urlparse.parse_qs(sys.argv[2][1:])
-	print ('PARAMS:', params)
-	print ('ARGV:', sys.argv)
+	print('Params: {}'.format(params))
+	print('Argv: {}'.format(sys.argv))
 
 	if 'content_type' in params:
 		content_type = params['content_type'][0]
-
 
 	fa = Filmarkivet(info)
 	if 'mode' in params:
