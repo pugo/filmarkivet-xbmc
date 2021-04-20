@@ -104,6 +104,9 @@ if (__name__ == "__main__"):
 
             if mode == 'themes':
                 view_menu(fa.get_themes())
+            if mode == 'theme' and url:
+                categories = fa.get_theme_categories(url)
+                view_menu(categories)
 
             if mode == 'watch':
                 media_url = fa.get_media_url(requests.utils.unquote(url))
