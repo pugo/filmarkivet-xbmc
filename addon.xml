@@ -27,11 +27,11 @@
       [fix] Support Filmarkivet web changes
     </news>
     <assets>
-      <icon>resources/icon.png</icon>
-	  <fanart></fanart>
-      <banner></banner>
-	  <clearlogo></clearlogo>
-	  <screenshot></screenshot>
+      	<icon>resources/icon.png</icon>
+		<fanart></fanart>
+		<banner></banner>
+	  	<clearlogo></clearlogo>
+	  	<screenshot></screenshot>
     </assets>
   </extension>
 </addon>
