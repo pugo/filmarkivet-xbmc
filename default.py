@@ -16,7 +16,7 @@
 '''
 
 import os, sys
-import xbmc, xbmcaddon, xbmcgui, xbmcplugin
+import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 from lib.filmarkivet import Filmarkivet
 import requests
 
@@ -70,9 +70,9 @@ class AddonInfo(object):
         self.icon = os.path.join(addon.getAddonInfo('path'), 'icon.png')
         self.fanart = os.path.join(addon.getAddonInfo('path'), 'fanart.jpg')
         self.trans = addon.getLocalizedString
-        self.profile_dir = xbmc.translatePath(addon.getAddonInfo("Profile"))
+        self.profile_dir = xbmcvfs.translatePath(addon.getAddonInfo("Profile"))
         os.makedirs(self.profile_dir, exist_ok=True)
-        self.cache_file = xbmc.translatePath(os.path.join(self.profile_dir, 'requests_cache'))
+        self.cache_file = xbmcvfs.translatePath(os.path.join(self.profile_dir, 'requests_cache'))
 
 
 
