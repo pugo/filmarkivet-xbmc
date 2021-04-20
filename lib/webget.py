@@ -19,7 +19,7 @@ import requests
 import requests_cache
 
 session = requests.Session()
-session.headers['User-Agent'] = 'kodi-tv'
+session.headers['User-Agent'] = 'kodi.tv'
 
 
 class GetException(Exception):
