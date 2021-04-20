@@ -35,10 +35,11 @@ __translation = addon.getLocalizedString
 def view_menu(menu):
     for item in menu:
         title = u'{} | {}'.format(item.title, item.description) if item.description else item.title
-        li = xbmcgui.ListItem(title, iconImage=item.icon)
+        li = xbmcgui.ListItem(label=title)
+        li.setArt({"thumb": item.icon})
         li.setInfo('video', {'title': item.title, 'year': item.year, 'duration': item.duration})
         if item.playable:
-            li.setProperty('isplayable', 'true')
+            li.setProperty("IsPlayable", "true")
             li.setInfo('video', {'plot': item.description})
         xbmcplugin.addDirectoryItem(info.handle, item.url, li, not item.playable)
     xbmcplugin.endOfDirectory(info.handle)
@@ -70,7 +71,9 @@ class AddonInfo(object):
         self.fanart = os.path.join(addon.getAddonInfo('path'), 'fanart.jpg')
         self.trans = addon.getLocalizedString
         self.profile_dir = xbmc.translatePath(addon.getAddonInfo("Profile"))
+        os.makedirs(self.profile_dir, exist_ok=True)
         self.cache_file = xbmc.translatePath(os.path.join(self.profile_dir, 'requests_cache'))
+
 
 
 if (__name__ == "__main__"):
@@ -102,8 +105,8 @@ if (__name__ == "__main__"):
             if mode == 'themes':
                 view_menu(fa.get_themes())
             if mode == 'theme' and url:
-                movies = fa.get_url_movies(url, mode='theme', page=page, limit=True)
-                view_menu(movies)
+                categories = fa.get_theme_categories(url)
+                view_menu(categories)
 
             if mode == 'watch':
                 media_url = fa.get_media_url(requests.utils.unquote(url))
