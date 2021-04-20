@@ -19,7 +19,7 @@ import requests
 import requests_cache
 
 session = requests.Session()
-session.headers['User-Agent'] = "Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0; en-US);"
+session.headers['User-Agent'] = 'kodi-tv'
 
 
 class GetException(Exception):

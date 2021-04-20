@@ -1,3 +1,3 @@
 
-#import resourceswebget
-#import filmarkivet
+import webget
+import filmarkivet
